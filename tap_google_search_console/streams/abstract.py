@@ -194,10 +194,14 @@ class IncrementalTableStream(BaseStream, ABC):
                     raise ValueError(f"Missing key {key} in record with primary keys {primary_keys_only}")
 
     def modify_start_end_dt_tm(self, end_dt_tm: datetime) -> Tuple[datetime, datetime]:
-        """Sets start_date_time of a new window to end_date_time of old window
+        """Sets start_date_time of a new window to the day AFTER the
+        end_date_time of the old window so consecutive windows do not share
+        a boundary date (GSC treats both startDate and endDate as inclusive,
+        so overlapping boundaries produce duplicate rows).
+
         Sets end_date_time of new window to 30 days(date_window_size) ahead
         since start_date_time."""
-        start_dt_tm = end_dt_tm
+        start_dt_tm = end_dt_tm + timedelta(days=1)
         end_dt_tm = start_dt_tm + timedelta(days=self.get_date_window_size)
         if end_dt_tm > self.now_dt_tm:
             end_dt_tm = self.now_dt_tm
